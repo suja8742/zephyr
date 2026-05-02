@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024 Demant A/S
- * Copyright (c) 2024-2025 Nordic Semiconductor ASA
+ * Copyright (c) 2024-2026 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -426,7 +426,7 @@ static void scan_for_broadcast_source(void)
 	scanning_for_broadcast_source = true;
 
 	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, NULL);
-	if (err) {
+	if (err != 0) {
 		printk("Scanning failed to start (err %d)\n", err);
 		return;
 	}
@@ -444,7 +444,7 @@ static void scan_for_broadcast_sink(void)
 	scanning_for_broadcast_source = false;
 
 	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, NULL);
-	if (err) {
+	if (err != 0) {
 		printk("Scanning failed to start (err %d)\n", err);
 		return;
 	}
@@ -673,7 +673,7 @@ int main(void)
 	int err;
 
 	err = bt_enable(NULL);
-	if (err) {
+	if (err != 0) {
 		printk("Bluetooth init failed (err %d)\n", err);
 		return 0;
 	}
@@ -699,15 +699,21 @@ int main(void)
 			continue;
 		}
 
-		err = bt_bap_broadcast_assistant_discover(broadcast_sink_conn);
+		err = bt_conn_set_security(broadcast_sink_conn, BT_SECURITY_L2);
 		if (err != 0) {
-			printk("Failed to discover BASS on the sink (err %d)\n", err);
+			printk("Failed to set security: %d\n", err);
 			continue;
 		}
 
 		err = k_sem_take(&sem_security_updated, SEM_TIMEOUT);
 		if (err != 0) {
 			printk("Failed to take sem_security_updated (err %d)\n", err);
+			continue;
+		}
+
+		err = bt_bap_broadcast_assistant_discover(broadcast_sink_conn);
+		if (err != 0) {
+			printk("Failed to discover BASS on the sink (err %d)\n", err);
 			continue;
 		}
 

@@ -13,6 +13,8 @@
 #include <zephyr/sys_clock.h>
 #include <zephyr/llext/symbol.h>
 
+#include <timeslicing.h>
+
 static uint64_t curr_tick;
 
 static sys_dlist_t timeout_list = SYS_DLIST_STATIC_INIT(&timeout_list);
@@ -279,6 +281,13 @@ k_spinlock_key_t sys_clock_lock(void)
 void sys_clock_unlock(k_spinlock_key_t key)
 {
 	k_spin_unlock(&timeout_lock, key);
+}
+#endif
+
+#if defined(CONFIG_TEST) || defined(CONFIG_ASSERT)
+bool sys_clock_is_locked(void)
+{
+	return z_spin_is_locked(&timeout_lock);
 }
 #endif
 

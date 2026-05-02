@@ -19,7 +19,9 @@ supported:
   - hwinfo
   - pinctrl
   - uart
+  - usbd
   - spi
   - i2s
+  - rtc
   - watchdog
   - comparator

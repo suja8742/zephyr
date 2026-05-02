@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/spi.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/net/net_pkt.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/ethernet.h>
@@ -512,6 +513,24 @@ static int lan9250_configure(const struct device *dev)
 		return ret;
 	}
 
+	/* Configure HMAC VLAN:
+	 *
+	 * If used, this register is typically set to the standard VLAN value of
+	 * 8100h. If both VLAN1 and VLAN2 set to the same value, VLAN1 is
+	 * given higher precedence and the maximum legal frame length is
+	 * set to 1522.
+	 */
+#if defined(CONFIG_NET_VLAN)
+	ret = lan9250_write_mac_reg(dev, LAN9250_HMAC_VLAN1, NET_ETH_PTYPE_VLAN);
+	if (ret < 0) {
+		return ret;
+	}
+	ret = lan9250_write_mac_reg(dev, LAN9250_HMAC_VLAN2, NET_ETH_PTYPE_VLAN);
+	if (ret < 0) {
+		return ret;
+	}
+#endif
+
 	/* Configure TX:
 	 *
 	 *   - TX enable
@@ -767,6 +786,9 @@ static enum ethernet_hw_caps lan9250_get_capabilities(const struct device *dev)
 	return ETHERNET_LINK_10BASE | ETHERNET_LINK_100BASE
 #if defined(CONFIG_NET_PROMISCUOUS_MODE)
 		| ETHERNET_PROMISC_MODE
+#endif
+#if defined(CONFIG_NET_VLAN)
+		| ETHERNET_HW_VLAN
 #endif
 	;
 }

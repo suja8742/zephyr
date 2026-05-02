@@ -927,7 +927,7 @@ static void discover_all(struct bt_conn *conn, int err, enum bt_audio_dir dir)
 		unicast_client_cbs.discover = discover_cb;
 
 		err = bt_bap_unicast_client_discover(default_conn, dir);
-		if (err) {
+		if (err != 0) {
 			bt_shell_error("bt_bap_unicast_client_discover err %d", err);
 		}
 	}
@@ -1259,129 +1259,6 @@ static int cmd_config(const struct shell *sh, size_t argc, char *argv[])
 	return 0;
 }
 
-static int cmd_stream_qos(const struct shell *sh, size_t argc, char *argv[])
-{
-	struct bt_bap_qos_cfg *qos;
-	unsigned long interval;
-	int err = 0;
-
-	if (default_stream == NULL) {
-		shell_print(sh, "No stream selected");
-		return -ENOEXEC;
-	}
-
-	qos = default_stream->qos;
-
-	if (qos == NULL) {
-		shell_print(sh, "Stream not configured");
-		return -ENOEXEC;
-	}
-
-	interval = shell_strtoul(argv[1], 0, &err);
-	if (err != 0) {
-		return -ENOEXEC;
-	}
-
-	if (!IN_RANGE(interval, BT_ISO_SDU_INTERVAL_MIN, BT_ISO_SDU_INTERVAL_MAX)) {
-		return -ENOEXEC;
-	}
-
-	qos->interval = interval;
-
-	if (argc > 2) {
-		unsigned long framing;
-
-		framing = shell_strtoul(argv[2], 0, &err);
-		if (err != 0) {
-			return -ENOEXEC;
-		}
-
-		if (framing != BT_ISO_FRAMING_UNFRAMED && framing != BT_ISO_FRAMING_FRAMED) {
-			return -ENOEXEC;
-		}
-
-		qos->framing = framing;
-	}
-
-	if (argc > 3) {
-		unsigned long latency;
-
-		latency = shell_strtoul(argv[3], 0, &err);
-		if (err != 0) {
-			return -ENOEXEC;
-		}
-
-		if (!IN_RANGE(latency, BT_ISO_LATENCY_MIN, BT_ISO_LATENCY_MAX)) {
-			return -ENOEXEC;
-		}
-
-		qos->latency = latency;
-	}
-
-	if (argc > 4) {
-		unsigned long pd;
-
-		pd = shell_strtoul(argv[4], 0, &err);
-		if (err != 0) {
-			return -ENOEXEC;
-		}
-
-		if (pd > BT_AUDIO_PD_MAX) {
-			return -ENOEXEC;
-		}
-
-		qos->pd = pd;
-	}
-
-	if (argc > 5) {
-		unsigned long sdu;
-
-		sdu = shell_strtoul(argv[5], 0, &err);
-		if (err != 0) {
-			return -ENOEXEC;
-		}
-
-		if (sdu > BT_ISO_MAX_SDU) {
-			return -ENOEXEC;
-		}
-
-		qos->sdu = sdu;
-	}
-
-	if (argc > 6) {
-		unsigned long phy;
-
-		phy = shell_strtoul(argv[6], 0, &err);
-		if (err != 0) {
-			return -ENOEXEC;
-		}
-
-		if (phy != BT_GAP_LE_PHY_1M && phy != BT_GAP_LE_PHY_2M &&
-		    phy != BT_GAP_LE_PHY_CODED) {
-			return -ENOEXEC;
-		}
-
-		qos->phy = phy;
-	}
-
-	if (argc > 7) {
-		unsigned long rtn;
-
-		rtn = shell_strtoul(argv[7], 0, &err);
-		if (err != 0) {
-			return -ENOEXEC;
-		}
-
-		if (rtn > BT_ISO_CONNECTED_RTN_MAX) {
-			return -ENOEXEC;
-		}
-
-		qos->rtn = rtn;
-	}
-
-	return 0;
-}
-
 static int set_group_param(
 	const struct shell *sh, struct bt_bap_unicast_group_param *group_param,
 	struct bt_bap_unicast_group_stream_pair_param pair_param[ARRAY_SIZE(unicast_streams)],
@@ -1503,7 +1380,7 @@ static int cmd_qos(const struct shell *sh, size_t argc, char *argv[])
 	}
 
 	err = bt_bap_stream_qos(default_conn, default_unicast_group.bap_group);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to setup QoS: %d", err);
 		return -ENOEXEC;
 	}
@@ -1552,7 +1429,7 @@ static int cmd_enable(const struct shell *sh, size_t argc, char *argv[])
 
 	err = bt_bap_stream_enable(default_stream, uni_stream->codec_cfg.meta,
 				   uni_stream->codec_cfg.meta_len);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to enable Channel");
 		return -ENOEXEC;
 	}
@@ -1570,7 +1447,7 @@ static int cmd_stop(const struct shell *sh, size_t argc, char *argv[])
 	}
 
 	err = bt_bap_stream_stop(default_stream);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to stop Channel");
 		return -ENOEXEC;
 	}
@@ -1588,7 +1465,7 @@ static int cmd_connect(const struct shell *sh, size_t argc, char *argv[])
 	}
 
 	err = bt_bap_stream_connect(default_stream);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to connect stream");
 		return -ENOEXEC;
 	}
@@ -1638,7 +1515,7 @@ static int cmd_metadata(const struct shell *sh, size_t argc, char *argv[])
 
 	err = bt_bap_stream_metadata(default_stream, uni_stream->codec_cfg.meta,
 				     uni_stream->codec_cfg.meta_len);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to set Channel metadata");
 		return -ENOEXEC;
 	}
@@ -1656,7 +1533,7 @@ static int cmd_start(const struct shell *sh, size_t argc, char *argv[])
 	}
 
 	err = bt_bap_stream_start(default_stream);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to start Channel");
 		return -ENOEXEC;
 	}
@@ -1674,7 +1551,7 @@ static int cmd_disable(const struct shell *sh, size_t argc, char *argv[])
 	}
 
 	err = bt_bap_stream_disable(default_stream);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to disable Channel");
 		return -ENOEXEC;
 	}
@@ -1758,7 +1635,7 @@ static int cmd_release(const struct shell *sh, size_t argc, char *argv[])
 	}
 
 	err = bt_bap_stream_release(default_stream);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Unable to release Channel");
 		return -ENOEXEC;
 	}
@@ -3288,6 +3165,12 @@ static int cmd_create_broadcast(const struct shell *sh, size_t argc,
 		return -ENOEXEC;
 	}
 
+	if (IS_ENABLED(CONFIG_BT_CAP_HANDOVER) && default_source.handover_in_progress) {
+		shell_info(sh, "CAP Handover in progress");
+
+		return -ENOEXEC;
+	}
+
 	named_preset = &default_broadcast_source_preset;
 
 	for (size_t i = 1U; i < argc; i++) {
@@ -3547,7 +3430,7 @@ static int cmd_create_broadcast_sink(const struct shell *sh, size_t argc, char *
 		shell_print(sh, "No PA sync available, starting scanning for broadcast_id");
 
 		err = bt_le_scan_start(&param, NULL);
-		if (err) {
+		if (err != 0) {
 			shell_print(sh, "Fail to start scanning: %d", err);
 
 			return -ENOEXEC;
@@ -3586,7 +3469,7 @@ static int cmd_create_sink_by_name(const struct shell *sh, size_t argc, char *ar
 	shell_print(sh, "Starting scanning for broadcast_name");
 
 	err = bt_le_scan_start(&param, NULL);
-	if (err) {
+	if (err != 0) {
 		shell_print(sh, "Fail to start scanning: %d", err);
 
 		return -ENOEXEC;
@@ -3768,7 +3651,7 @@ static int cmd_set_loc(const struct shell *sh, size_t argc, char *argv[])
 	loc = loc_val;
 
 	err = bt_pacs_set_location(dir, loc);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Set available contexts err %d", err);
 		return -ENOEXEC;
 	}
@@ -3793,7 +3676,7 @@ static int cmd_context(const struct shell *sh, size_t argc, char *argv[])
 	}
 
 	ctx_val = shell_strtoul(argv[2], 16, &err);
-	if (err) {
+	if (err != 0) {
 		shell_error(sh, "Could not parse context: %d", err);
 
 		return err;
@@ -3815,13 +3698,13 @@ static int cmd_context(const struct shell *sh, size_t argc, char *argv[])
 		}
 
 		err = bt_pacs_set_supported_contexts(dir, ctx);
-		if (err) {
+		if (err != 0) {
 			shell_error(sh, "Set supported contexts err %d", err);
 			return err;
 		}
 	} else if (!strcmp(argv[3], "available")) {
 		err = bt_pacs_set_available_contexts(dir, ctx);
-		if (err) {
+		if (err != 0) {
 			shell_error(sh, "Set available contexts err %d", err);
 			return err;
 		}
@@ -4244,8 +4127,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 #if defined(CONFIG_BT_BAP_BROADCAST_SINK)
 	SHELL_CMD_ARG(create_broadcast_sink, NULL, "0x<broadcast_id>", cmd_create_broadcast_sink, 2,
 		      0),
-	SHELL_CMD_ARG(create_sink_by_name, NULL, "<broadcast_name>",
-		      cmd_create_sink_by_name, 2, 0),
+	SHELL_CMD_ARG(create_sink_by_name, NULL, "<broadcast_name>", cmd_create_sink_by_name, 2, 0),
 	SHELL_CMD_ARG(sync_broadcast, NULL,
 		      "0x<bis_index> [[[0x<bis_index>] 0x<bis_index>] ...] "
 		      "[bcode <broadcast code> || bcode_str <broadcast code as string>]",
@@ -4260,8 +4142,6 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD_ARG(config, NULL,
 		      "<direction: sink, source> <index> [loc <loc_bits>] [preset <preset_name>]",
 		      cmd_config, 3, 4),
-	SHELL_CMD_ARG(stream_qos, NULL, "interval [framing] [latency] [pd] [sdu] [phy] [rtn]",
-		      cmd_stream_qos, 2, 6),
 	SHELL_CMD_ARG(connect, NULL, "Connect the CIS of the stream", cmd_connect, 1, 0),
 	SHELL_CMD_ARG(qos, NULL, "Send QoS configure for Unicast Group", cmd_qos, 1, 0),
 	SHELL_CMD_ARG(enable, NULL, "[context]", cmd_enable, 1, 1),

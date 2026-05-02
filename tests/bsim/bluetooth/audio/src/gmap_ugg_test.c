@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Nordic Semiconductor ASA
+ * Copyright (c) 2023-2026 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -1009,6 +1009,8 @@ static void test_gmap_ugg_unicast_ac(const struct gmap_unicast_ac_param *param)
 	}
 
 	for (size_t i = 0U; i < param->conn_cnt; i++) {
+		update_security(connected_conns[i]);
+
 		discover_cas(connected_conns[i]);
 
 		if (param->snk_cnt[i] > 0U) {
@@ -1072,7 +1074,7 @@ static void setup_extended_adv_data(struct bt_cap_broadcast_source *source,
 	int err;
 
 	err = bt_rand(&broadcast_id, BT_AUDIO_BROADCAST_ID_SIZE);
-	if (err) {
+	if (err != 0) {
 		FAIL("Unable to generate broadcast ID: %d\n", err);
 		return;
 	}
@@ -1112,19 +1114,19 @@ static void stop_and_delete_extended_adv(struct bt_le_ext_adv *adv)
 
 	/* Stop extended advertising */
 	err = bt_le_per_adv_stop(adv);
-	if (err) {
+	if (err != 0) {
 		FAIL("Failed to stop periodic advertising: %d\n", err);
 		return;
 	}
 
 	err = bt_le_ext_adv_stop(adv);
-	if (err) {
+	if (err != 0) {
 		FAIL("Failed to stop extended advertising: %d\n", err);
 		return;
 	}
 
 	err = bt_le_ext_adv_delete(adv);
-	if (err) {
+	if (err != 0) {
 		FAIL("Failed to delete extended advertising: %d\n", err);
 		return;
 	}
